@@ -2,63 +2,56 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\StockResource;
 use App\Models\Stock;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class StockController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function index()
+    public function index(Request $request): JsonResponse
     {
-        //
-    }
+        $stocks = Stock::limit(10);
+        if ($request->query('sort')) {
+            $sort_key = $request->query('sort');
+            $stocks = $this->sortBy($stocks, $sort_key);
+        }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
+        $stocks = $stocks->get();
+        return response()->json(['data' => StockResource::collection($stocks)], Response::HTTP_OK);
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Stock  $stock
-     * @return \Illuminate\Http\Response
+     * @param Stock $stock
+     * @return JsonResponse
      */
-    public function show(Stock $stock)
+    public function show(Stock $stock): JsonResponse
     {
-        //
+        return response()->json(['data' => new StockResource($stock)], Response::HTTP_OK);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Stock  $stock
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Stock $stock)
+    protected function sortBy(Stock $stock, string $sort_type)
     {
-        //
-    }
+        $sort_fields = [
+            'date' => 'created_at',
+            'rate' => 'rate_change_percent',
+            '-date' => 'created_at',
+            '-rate' => 'rate_change_percent',
+        ];
+        if (!array_key_exists($sort_type, $sort_fields))
+            return null;
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Stock  $stock
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Stock $stock)
-    {
-        //
+        $order = str_contains('-', $sort_type) ? 'desc' : 'asc';
+
+        return $stock->orderBy($sort_fields[$sort_type], $order);
     }
 }
