@@ -19,9 +19,7 @@ class StockTableSeeder extends Seeder
             'Yandex',
             'JD.com',
             'StoneCo',
-            'Shoprite Holdings',
             'HDFC Bank',
-            'Metaverse',
             'Zoom Holdings'
         ];
 
